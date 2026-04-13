@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Admin Dashboard</title>
+    <script src="https://jsdelivr.net"></script>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --primary: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Layout Mobile-First */
+        header {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo { font-weight: 700; font-size: 1.2rem; color: var(--primary); letter-spacing: -0.5px; }
+
+        main { padding: 1.5rem; flex: 1; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Mobile */
+            gap: 1.25rem;
+        }
+
+        /* Cards Estilo Enterprise */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; margin-bottom: 0.5rem; }
+        .card-value { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .card-trend { font-size: 0.75rem; font-weight: 600; color: var(--success); }
+
+        .chart-container { margin-top: 1.5rem; height: 250px; position: relative; }
+
+        /* Responsividade para Desktop */
+        @media (min-width: 768px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .full-width { grid-column: span 2; }
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
+            .full-width { grid-column: span 3; }
+            .sidebar-layout { display: grid; grid-template-columns: 240px 1fr; }
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Nexus.Core</div>
+        <div class="user-profile" style="width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0;"></div>
+    </header>
+
+    <main>
+        <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 1.5rem; font-weight: 700;">Visão Geral</h1>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Bem-vindo de volta, aqui estão os dados de hoje.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- KPIs -->
+            <div class="card">
+                <div class="card-title">Receita Total</div>
+                <div class="card-value">R$ 45.285</div>
+                <div class="card-trend">↑ 12.5% vs mês anterior</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Novos Usuários</div>
+                <div class="card-value">1,240</div>
+                <div class="card-trend">↑ 4.2%</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Taxa de Conversão</div>
+                <div class="card-value">3.2%</div>
+                <div class="card-trend" style="color: #ef4444;">↓ 0.8%</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Sessões Ativas</div>
+                <div class="card-value">573</div>
+                <div class="status-badge">Tempo real</div>
+            </div>
+
+            <!-- Gráfico Principal -->
+            <div class="card full-width">
+                <div class="card-title">Performance de Vendas (Mensal)</div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico Secundário -->
+            <div class="card">
+                <div class="card-title">Distribuição por Canal</div>
+                <div class="chart-container" style="height: 200px;">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuração Global do Chart.js para manter o estilo clean
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // Gráfico de Linha
+        const ctxSales = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctxSales, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Receita',
+                    data: [30000, 35000, 32000, 45000, 42000, 48000],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { border: { display: false }, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Gráfico de Pizza
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['Direto', 'Orgânico', 'Social'],
+                datasets: [{
+                    data: [55, 30, 15],
+                    backgroundColor: ['#2563eb', '#10b981', '#f59e0b'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } } }
+            }
+        });
+    </script>
+</body>
+</html>
